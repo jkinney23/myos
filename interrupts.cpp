@@ -3,6 +3,25 @@
 
 void printf(char* str);
 
+
+InterruptHandler::InterruptHandler(uint8_t interruptNumber, InterruptManager* interruptManager)
+{
+	this->interruptNumber = interruptNumber;
+	this->interruptManager = interruptManager;
+	interruptManager->handlers[interruptNumber] = this;
+}
+InterruptHandler::~InterruptHandler()
+{
+	if(	interruptManager->handlers[interruptNumber] == this)
+			interruptManager->handlers[interruptNumber] = 0;
+
+}
+uint32_t InterruptHandler::HandleInterrupt(uint32_t esp)
+{
+	return esp;
+}
+
+
 InterruptManager::GateDescriptor InterruptManager::interruptDescriptorTable[256];
 
 InterruptManager* InterruptManager::ActiveInterruptManager = 0;
@@ -35,7 +54,10 @@ InterruptManager::InterruptManager(GlobalDescriptorTable* gdt)
 	const uint8_t IDT_INTERRUPT_GATE = 0xE;
 	
 	for(uint16_t i = 0; i < 256; i++)
+	{
+		handlers[i] = 0;
 		SetInteruptDescriptorTableEntry(i, CodeSegment, &IgnoreInterruptRequest, 0, IDT_INTERRUPT_GATE);
+	}
 	
 	SetInteruptDescriptorTableEntry(0x20, CodeSegment, &HandleInterruptRequest0x00, 0, IDT_INTERRUPT_GATE);
 	SetInteruptDescriptorTableEntry(0x21, CodeSegment, &HandleInterruptRequest0x01, 0, IDT_INTERRUPT_GATE);
@@ -95,9 +117,17 @@ uint32_t InterruptManager::handleInterrupt(uint8_t interruptNumber, uint32_t esp
 
 uint32_t InterruptManager::DoHandleInterrupt(uint8_t interruptNumber, uint32_t esp)
 {
-	if(interruptNumber != 0x20)
+	if(handlers[interruptNumber] != 0)
 	{
-		printf(" INTERRUPT!");
+		esp = handlers[interruptNumber]->HandleInterrupt(esp);
+	}
+	else if(interruptNumber != 0x20)
+	{
+		char* message = "UNHANDLED INTERRUPT 0x00";
+		char* hex = "0123456789ABCDEF";
+		message[22] = hex[(interruptNumber >> 4) & 0x0F];
+		message[23] = hex[interruptNumber & 0x0F];
+		printf(message);
 	}
 	
 	if (0x20 <= interruptNumber && interruptNumber < 0x30)
