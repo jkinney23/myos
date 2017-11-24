@@ -18,7 +18,7 @@
 		InterruptHandler(uint8_t interruptNumber, InterruptManager* interruptManager);
 		~InterruptHandler();
 	public:
-		uint32_t HandleInterrupt(uint32_t esp);
+		virtual uint32_t HandleInterrupt(uint32_t esp);
 	};
 
 
