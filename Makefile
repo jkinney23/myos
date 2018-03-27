@@ -2,7 +2,7 @@ GPPPARAMS = -m32 -fno-use-cxa-atexit -nostdlib -fno-builtin -fno-rtti -fno-excep
 ASPARAMS = --32
 LDPARAMS = -melf_i386
 
-objects = loader.o gdt.o kernel.o
+objects = loader.o gdt.o port.o kernel.o
 
 %.o: %.cpp
 	g++ $(GPPPARAMS) -o $@ -c $<
@@ -15,9 +15,6 @@ mykernel.bin: linker.ld $(objects)
 
 install: mykernel.bin
 	sudo cp $< /boot/mykernel.bin
-
-clean:
-	rm *.o *.bin *.iso
 
 mykernel.iso: mykernel.bin
 	mkdir iso
@@ -36,4 +33,8 @@ mykernel.iso: mykernel.bin
 	
 run: mykernel.iso
 	echo "this doesn't work"
-	ssh jason@192.168.10.3 VirtualBox --startvm "My Operating System" &
+	# ssh jason@192.168.10.3 VirtualBox --startvm "My Operating System" &
+
+.PHONY: clean
+clean:
+	rm -f $(objects) mykernel.bin mykernel.iso
