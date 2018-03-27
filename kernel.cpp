@@ -1,4 +1,5 @@
 #include "types.h"
+#include "gdt.h"
 
 void printf(char * str)
 {
@@ -22,6 +23,8 @@ extern "C" void kernelMain(void *multiboot_structure, uint32_t magicnumber)
 {
 
 	printf("Hello World! --- https://jkinney23.github.io/project0-jkinney23/");
+
+	GlobalDescriptorTable gdt;
 
 	while(1);
 
