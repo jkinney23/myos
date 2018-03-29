@@ -64,6 +64,61 @@ public:
 };
 
 
+class MouseToConsole : public MouseEventHandler
+{
+	int8_t x, y;
+public:
+
+	MouseToConsole()
+	{
+		static uint16_t* VideoMemory = (uint16_t*)0xb8000;	
+		x = 40;
+		y = 12;
+		VideoMemory[80*y+x] = ((VideoMemory[80*y+x] & 0xf000) >> 4)
+							| ((VideoMemory[80*y+x] & 0x0f00) << 4)
+							| ((VideoMemory[80*y+x] & 0x00ff));
+	}
+
+
+	void OnMouseMove(int xoffset, int yoffset)
+	{
+		static uint16_t* VideoMemory = (uint16_t*)0xb8000;
+		
+		VideoMemory[80*y+x] = ((VideoMemory[80*y+x] & 0xf000) >> 4)
+							| ((VideoMemory[80*y+x] & 0x0f00) << 4)
+							| ((VideoMemory[80*y+x] & 0x00ff)); 
+		
+		x += xoffset;
+		if (x < 0) x = 0;
+		if (x >= 80) x = 79;
+		
+		y += yoffset; // !!! is it -= or +=???
+		if (y < 0) y = 0;
+		if (y >= 25) y = 24;
+		
+		VideoMemory[80*y+x] = ((VideoMemory[80*y+x] & 0xf000) >> 4)
+							| ((VideoMemory[80*y+x] & 0x0f00) << 4)
+							| ((VideoMemory[80*y+x] & 0x00ff));	
+	}
+	
+	void OnMouseUp(int i)
+	{
+		static uint16_t* VideoMemory = (uint16_t*)0xb8000;
+		VideoMemory[80*y+x] = ((VideoMemory[80*y+x] & 0xf000) >> 4)
+							| ((VideoMemory[80*y+x] & 0x0f00) << 4)
+							| ((VideoMemory[80*y+x] & 0x00ff));
+	}
+	void OnMouseDown(int i)
+	{
+		static uint16_t* VideoMemory = (uint16_t*)0xb8000;
+		VideoMemory[80*y+x] = ((VideoMemory[80*y+x] & 0xf000) >> 4)
+							| ((VideoMemory[80*y+x] & 0x0f00) << 4)
+							| ((VideoMemory[80*y+x] & 0x00ff));
+	}
+
+};
+
+
 typedef void (*constructor)();
 extern "C" constructor start_ctors;
 extern "C" constructor end_ctors;
@@ -90,7 +145,8 @@ extern "C" void kernelMain(void *multiboot_structure, uint32_t magicnumber)
 	KeyboardDriver keyboard(&interrupts, &kbhandler);
 	drvManager.AddDriver(&keyboard);
 	
-	MouseDriver mouse(&interrupts);
+	MouseToConsole mousehandler;
+	MouseDriver mouse(&interrupts, &mousehandler);
 	drvManager.AddDriver(&mouse);
 	
 	printf("Initializing Hardware, Stage 2\n");
