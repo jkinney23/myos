@@ -1,6 +1,7 @@
 #include "types.h"
 #include "gdt.h"
 #include "interrupts.h"
+#include "driver.h"
 #include "keyboard.h"
 #include "mouse.h"
 
@@ -41,6 +42,28 @@ void printf(char * str)
 	}
 }
 
+
+void printfHex(uint8_t key)
+{
+	char* message = "00";
+	char* hex = "0123456789ABCDEF";
+	message[0] = hex[(key >> 4) & 0x0F];
+	message[1] = hex[key & 0x0F];
+	printf(message);
+}
+
+class PrintfKeyboardEventHandler : public KeyboardEventHandler
+{
+public:
+	void OnKeyDown(char c)
+	{
+		char* foo = " ";
+		foo[0] = c;
+		printf(foo);
+	}
+};
+
+
 typedef void (*constructor)();
 extern "C" constructor start_ctors;
 extern "C" constructor end_ctors;
@@ -58,10 +81,22 @@ extern "C" void kernelMain(void *multiboot_structure, uint32_t magicnumber)
 
 	GlobalDescriptorTable gdt;
 	InterruptManager interrupts(&gdt);
+	
+	printf("Initializing Hardware, Stage 1\n");
 
-	KeyboardDriver keyboard(&interrupts);
+	DriverManager drvManager;
+	
+	PrintfKeyboardEventHandler kbhandler;
+	KeyboardDriver keyboard(&interrupts, &kbhandler);
+	drvManager.AddDriver(&keyboard);
+	
 	MouseDriver mouse(&interrupts);
+	drvManager.AddDriver(&mouse);
+	
+	printf("Initializing Hardware, Stage 2\n");
+	drvManager.ActivateAll();
 
+	printf("Initializing Hardware, Stage 3\n");	
 	interrupts.Activate();
 
 	while(1);

@@ -5,13 +5,23 @@ MouseDriver::MouseDriver(InterruptManager *manager)
   dataport(0x60),
   commandport(0x64)
 {
+}
+
+MouseDriver::~MouseDriver()
+{
+}
+
+void MouseDriver::Activate()
+{
 	offset = 0;
 	buttons = 0;
+	x = 40;
+	y = 12;
 	
 	static uint16_t* VideoMemory = (uint16_t*)0xb8000;	
-	VideoMemory[80*12+40] = ((VideoMemory[80*12+40] & 0xf000) >> 4)
-						|   ((VideoMemory[80*12+40] & 0x0f00) << 4)
-						|   ((VideoMemory[80*12+40] & 0x00ff)); 
+	VideoMemory[80*y+x] = ((VideoMemory[80*y+x] & 0xf000) >> 4)
+						| ((VideoMemory[80*y+x] & 0x0f00) << 4)
+						| ((VideoMemory[80*y+x] & 0x00ff));
 
 	commandport.Write(0xa8);	// activate interrupts
 	commandport.Write(0x20);	// get current state
@@ -23,12 +33,6 @@ MouseDriver::MouseDriver(InterruptManager *manager)
 	dataport.Write(0xf4);
 	dataport.Read();
 }
-
-MouseDriver::~MouseDriver()
-{
-}
-
-void printf(char*);
 
 uint32_t MouseDriver::HandleInterrupt(uint32_t esp)
 {
