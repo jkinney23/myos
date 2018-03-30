@@ -1,5 +1,9 @@
-#include "mouse.h"
 
+#include <drivers/mouse.h>
+
+using namespace myos::common;
+using namespace myos::drivers;
+using namespace myos::hardwarecommunication;
 
 MouseEventHandler::MouseEventHandler()
 {
@@ -44,7 +48,7 @@ void MouseDriver::Activate()
 	uint8_t status = dataport.Read() | 2;
 	commandport.Write(0x60);	// set state
 	dataport.Write(status);
-	
+
 	commandport.Write(0xd4);
 	dataport.Write(0xf4);
 	dataport.Read();
@@ -55,21 +59,21 @@ uint32_t MouseDriver::HandleInterrupt(uint32_t esp)
 	uint8_t status = commandport.Read();
 	if (!(status & 0x20))
 		return esp;
-	
+
 	buffer[offset] = dataport.Read();
-	
+
 	if (handler == 0)
 		return esp;
-	
+
 	offset = (offset + 1) % 3;
-	
+
 	if (offset == 0)
 	{
 		if(buffer[1] != 0 || buffer[2] != 0)
 		{
 			handler->OnMouseMove(buffer[1], -buffer[2]);
 		}
-		
+
 		for (uint8_t i = 0; i < 3; i++)
 		{
 			if ((buffer[0] & (0x01 << i)) != (buttons & (0x01 << i)))
@@ -79,17 +83,17 @@ uint32_t MouseDriver::HandleInterrupt(uint32_t esp)
 					handler->OnMouseUp(i+1);
 				else
 					handler->OnMouseDown(i+1);
-				
+
 				//VideoMemory[80*y+x] = ((VideoMemory[80*y+x] & 0xf000) >> 4)
 				//					| ((VideoMemory[80*y+x] & 0x0f00) << 4)
 				//					| ((VideoMemory[80*y+x] & 0x00ff));
 			}
-			
-			
+
+
 		}
 		buttons = buffer[0];
 	}
 
-			
+
 	return esp;
 }

@@ -1,10 +1,15 @@
-#include "keyboard.h"
+
+#include <drivers/keyboard.h>
+
+using namespace myos::common;
+using namespace myos::drivers;
+using namespace myos::hardwarecommunication;
 
 
 KeyboardEventHandler::KeyboardEventHandler()
 {
 }
-	
+
 void KeyboardEventHandler::OnKeyDown(char)
 {
 }
@@ -38,20 +43,20 @@ void KeyboardDriver::Activate()
 	uint8_t status = (dataport.Read() | 1) & ~0x10;
 	commandport.Write(0x60);	// set state
 	dataport.Write(status);
-	
+
 	dataport.Write(0xf4);
 }
 
 uint32_t KeyboardDriver::HandleInterrupt(uint32_t esp)
 {
 	uint8_t key = dataport.Read();
-	
+
 	if (handler == 0)
 		return esp;
-	
+
 	static bool Shift = false;
     static bool CapsLock = false;
-    
+
 	switch(key)
 	{
 	case 0x02: if (Shift) handler->OnKeyDown('!'); else handler->OnKeyDown('1'); break;
@@ -64,7 +69,7 @@ uint32_t KeyboardDriver::HandleInterrupt(uint32_t esp)
 	case 0x09: if (Shift) handler->OnKeyDown('*'); else handler->OnKeyDown('8'); break;
 	case 0x0A: if (Shift) handler->OnKeyDown('('); else handler->OnKeyDown('9'); break;
 	case 0x0B: if (Shift) handler->OnKeyDown(')'); else handler->OnKeyDown('0'); break;
-	
+
 	case 0x1E: if (Shift||CapsLock) handler->OnKeyDown('A'); else handler->OnKeyDown('a'); break;
 	case 0x30: if (Shift||CapsLock) handler->OnKeyDown('B'); else handler->OnKeyDown('b'); break;
 	case 0x2E: if (Shift||CapsLock) handler->OnKeyDown('C'); else handler->OnKeyDown('c'); break;
@@ -112,7 +117,7 @@ uint32_t KeyboardDriver::HandleInterrupt(uint32_t esp)
 
 	case 0X45: // Numlock (ignored)
 	    break;
-	
+
 	default:
 		if(key < 0x80)
 		{
@@ -121,6 +126,6 @@ uint32_t KeyboardDriver::HandleInterrupt(uint32_t esp)
 			printf(":");
 			break;
 		}
-    }	
+    }
 	return esp;
 }
