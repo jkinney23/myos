@@ -14,6 +14,7 @@ objects = obj/loader.o \
 		  obj/drivers/vga.o \
 		  obj/gui/widget.o \
 		  obj/gui/window.o \
+		  obj/gui/desktop.o \
 		  obj/kernel.o
 
 obj/%.o: src/%.cpp
@@ -46,7 +47,7 @@ mykernel.iso: mykernel.bin
 	rm -rf iso
 
 run: mykernel.iso
-	echo "this doesn't work"
+	echo "this doesn't work; run your own VirtualBox"
 	# ssh jason@192.168.10.3 VirtualBox --startvm "My Operating System" &
 
 .PHONY: clean

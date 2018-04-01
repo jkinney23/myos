@@ -3,7 +3,7 @@
 using namespace myos::common;
 using namespace myos::gui;
 
-Widget::Widget(Widget *parent, int32_t x, int32_t y, int32_t h, int32_t w,
+Widget::Widget(Widget *parent, int32_t x, int32_t y, int32_t w, int32_t h,
                                uint8_t r, uint8_t g, uint8_t b)
 : KeyboardEventHandler()
 {
@@ -69,7 +69,7 @@ void Widget::OnMouseMove(int32_t oldx, int32_t oldy, int32_t newx, int32_t newy)
 // Class CompositeWidget
 //----------------------
 CompositeWidget::CompositeWidget(Widget *parent,
-       int32_t x, int32_t y, int32_t h, int32_t w,
+       int32_t x, int32_t y, int32_t w, int32_t h,
        uint8_t r, uint8_t g, uint8_t b)
 : Widget(parent, x,y,w,h, r,g,b)
 {
@@ -98,7 +98,7 @@ bool CompositeWidget::AddChild(Widget *child)
 void CompositeWidget::Draw(GraphicsContext *gc)
 {
     Widget::Draw(gc);
-    for (int i = numChildren; i >= 0; --i)
+    for (int i = numChildren-1; i >= 0; --i)
         children[i]->Draw(gc);
 }
 
