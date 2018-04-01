@@ -3,9 +3,9 @@
 using namespace myos::common;
 using namespace myos::gui;
 
-Widget::Widget(Widget *parent,
-           int32_t x, int32_t y, int32_t h, int32_t w,
-           uint8_t r, uint8_t g, uint8_t b,);
+Widget::Widget(Widget *parent, int32_t x, int32_t y, int32_t h, int32_t w,
+                               uint8_t r, uint8_t g, uint8_t b)
+: KeyboardEventHandler()
 {
     this->parent = parent;
     this->x = x;
@@ -41,16 +41,22 @@ void Widget::Draw(GraphicsContext *gc)
     int X = 0;
     int Y = 0;
     ModelToScreen(X, Y);
-    gc->FillRectangle(X, Y, w, h, r, g, b)
+    gc->FillRectangle(X, Y, w, h, r, g, b);
 }
 
-void Widget::OnMouseDown(int32_t x, int32_t y)
+bool Widget::ContainsCoordinate(int32_t x, int32_t y)
+{
+    return this->x <= x && x < this->x + this->w
+        && this->y <= y && y < this->y + this->h;
+}
+
+void Widget::OnMouseDown(int32_t x, int32_t y, uint8_t button)
 {
     if (Focussable)
         GetFocus(this);
 }
 
-void Widget::OnMouseUp(int32_t x, int32_t y)
+void Widget::OnMouseUp(int32_t x, int32_t y, uint8_t button)
 {
 }
 
@@ -58,19 +64,14 @@ void Widget::OnMouseMove(int32_t oldx, int32_t oldy, int32_t newx, int32_t newy)
 {
 }
 
-void Widget::OnKeyDown(char *str)
-{
-}
 
-void Widget::OnKeyUp(char *str)
-{
-}
-
-
-
+//----------------------
+// Class CompositeWidget
+//----------------------
 CompositeWidget::CompositeWidget(Widget *parent,
        int32_t x, int32_t y, int32_t h, int32_t w,
-       uint8_t r, uint8_t g, uint8_t b,)
+       uint8_t r, uint8_t g, uint8_t b)
+: Widget(parent, x,y,w,h, r,g,b)
 {
     focussedChild = 0;
     numChildren = 0;
@@ -86,6 +87,14 @@ void CompositeWidget::GetFocus(Widget *widget)
         parent->GetFocus(this);
 }
 
+bool CompositeWidget::AddChild(Widget *child)
+{
+    if (numChildren >= 100)
+        return false;
+    children[numChildren++] = child;
+    return true;
+}
+
 void CompositeWidget::Draw(GraphicsContext *gc)
 {
     Widget::Draw(gc);
@@ -93,22 +102,22 @@ void CompositeWidget::Draw(GraphicsContext *gc)
         children[i]->Draw(gc);
 }
 
-void CompositeWidget::OnMouseDown(int32_t x, int32_t y)
+void CompositeWidget::OnMouseDown(int32_t x, int32_t y, uint8_t button)
 {
     for (int i = 0; i < numChildren; ++i)
         if (children[i]->ContainsCoordinate(x - this->x, y - this->y))
         {
-            children[i]->OnMouseDown(x - this->x, y - this->y);
+            children[i]->OnMouseDown(x - this->x, y - this->y, button);
             break;
         }
 }
 
-void CompositeWidget::OnMouseUp(int32_t x, int32_t y)
+void CompositeWidget::OnMouseUp(int32_t x, int32_t y, uint8_t button)
 {
     for (int i = 0; i < numChildren; ++i)
         if (children[i]->ContainsCoordinate(x - this->x, y - this->y))
         {
-            children[i]->OnMouseUp(x - this->x, y - this->y);
+            children[i]->OnMouseUp(x - this->x, y - this->y, button);
             break;
         }
 }
@@ -133,13 +142,13 @@ void CompositeWidget::OnMouseMove(int32_t oldx, int32_t oldy, int32_t newx, int3
         }
 }
 
-void CompositeWidget::OnKeyDown(char *str)
+void CompositeWidget::OnKeyDown(char str)
 {
     if (focussedChild != 0)
         focussedChild->OnKeyDown(str);
 }
 
-void CompositeWidget::OnKeyUp(char *str)
+void CompositeWidget::OnKeyUp(char str)
 {
     if (focussedChild != 0)
         focussedChild->OnKeyUp(str);
