@@ -16,6 +16,7 @@ using namespace myos::drivers;
 using namespace myos::hardwarecommunication;
 using namespace myos::gui;
 
+//#define GRAPHICS_MODE
 
 void printf(char * str)
 {
@@ -155,38 +156,49 @@ extern "C" void kernelMain(void *multiboot_structure, uint32_t magicnumber)
 
 	DriverManager drvManager;
 
-		//PrintfKeyboardEventHandler kbhandler;
-		//KeyboardDriver keyboard(&interrupts, &kbhandler);
+#ifndef GRAPHICS_MODE
+		PrintfKeyboardEventHandler kbhandler;
+		KeyboardDriver keyboard(&interrupts, &kbhandler);
+#else
 		KeyboardDriver keyboard(&interrupts, &desktop);
+#endif
 		drvManager.AddDriver(&keyboard);
 
-		//MouseToConsole mousehandler;
-		//MouseDriver mouse(&interrupts, &mousehandler);
+#ifndef GRAPHICS_MODE
+		MouseToConsole mousehandler;
+		MouseDriver mouse(&interrupts, &mousehandler);
+#else
 		MouseDriver mouse(&interrupts, &desktop);
+#endif
 		drvManager.AddDriver(&mouse);
 
 		PeripheralComponentInterconnectController PCIController;
 		PCIController.SelectDrivers(&drvManager, &interrupts);
 
+#ifdef GRAPHICS_MODE
 		VideoGraphicsArray vga;
-
+#endif
 
 	printf("Initializing Hardware, Stage 2\n");
 	drvManager.ActivateAll();
 
 	printf("Initializing Hardware, Stage 3\n");
 
+#ifdef GRAPHICS_MODE
 	vga.SetMode(320, 200, 8);
 	//vga.FillRectangle(0, 0, 320, 200, 0x00, 0xa8, 0xa8);
 	Window win1(&desktop, 10, 10, 20, 20, 0xa8, 0x00, 0x00);
 	desktop.AddChild(&win1);
 	Window win2(&desktop, 40, 15, 30, 30, 0x00, 0xa8, 0x00);
 	desktop.AddChild(&win2);
+#endif
 	interrupts.Activate();
 
 	while(1)
 	{
+#ifdef GRAPHICS_MODE
 		desktop.Draw(&vga);
+#endif
 	}
 
 }
