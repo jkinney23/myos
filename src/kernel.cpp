@@ -197,6 +197,8 @@ extern "C" void kernelMain(void *multiboot_structure, uint32_t magicnumber)
 	while(1)
 	{
 #ifdef GRAPHICS_MODE
+		// this is silly...methods that require an update
+		// should call draw themselves.
 		desktop.Draw(&vga);
 #endif
 	}
