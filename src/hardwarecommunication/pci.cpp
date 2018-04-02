@@ -142,13 +142,23 @@ BaseAddressRegister PeripheralComponentInterconnectController::GetBaseAddressReg
 
 Driver* PeripheralComponentInterconnectController::GetDriver(PeripheralComponentInterconnectDeviceDescriptor dev, InterruptManager *interrupts)
 {
+    Driver *driver = 0;
+    static bool AMD = false;
+    static bool VGA = false;
     switch (dev.vendor_id)
     {
     case 0x1022:    // AMD
         switch (dev.device_id)
         {
         case 0x2000:    // am79c973
-            printf("AMD am79c973 ");
+            if(!AMD)
+            {
+                driver = (amd_am79c973)MemoryManager::activeMemoryManager->malloc(sizeof(amd_am79c973));
+                if (driver != 0)
+                    new (driver)amd_am79c973(...);
+                printf("Device: AMD am79c973\n");
+                AMD = true;
+            }
             break;
         }
         break;
@@ -169,12 +179,16 @@ Driver* PeripheralComponentInterconnectController::GetDriver(PeripheralComponent
         switch (dev.subclass_id)
         {
         case 0x00:  // VGA
-            printf("VGA ");
+            if(!VGA)
+            {
+                printf("Class: VGA\n");
+                VGA = true;
+            }
             break;
         }
         break;
     }
-    return 0;
+    return driver;
 }
 
 PeripheralComponentInterconnectDeviceDescriptor PeripheralComponentInterconnectController::GetDeviceDescriptor(uint16_t bus, uint16_t device, uint16_t function)

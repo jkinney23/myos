@@ -4,6 +4,7 @@ LDPARAMS = -melf_i386
 
 objects = obj/loader.o \
 		  obj/gdt.o \
+		  obj/memorymanagement.o \
 		  obj/drivers/driver.o \
 		  obj/hardwarecommunication/port.o \
 		  obj/hardwarecommunication/interruptstubs.o \
@@ -48,8 +49,8 @@ mykernel.iso: mykernel.bin
 	rm -rf iso
 
 run: mykernel.iso
-	echo "this doesn't work; run your own VirtualBox"
-	#ssh jason@192.168.10.3 VirtualBox --startvm "My Operating System" --type headless &
+	#echo "this doesn't work; run your own VirtualBox"
+	ssh jason@192.168.10.4 VBoxManage startvm MyOperatingSystem &
 
 .PHONY: clean
 clean:
