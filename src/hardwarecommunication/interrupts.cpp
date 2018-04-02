@@ -1,6 +1,7 @@
 
 #include <hardwarecommunication/interrupts.h>
 
+using namespace myos;
 using namespace myos::common;
 using namespace myos::hardwarecommunication;
 
@@ -48,15 +49,17 @@ void InterruptManager::SetInterruptDescriptorTableEntry(
 }
 
 
-InterruptManager::InterruptManager(GlobalDescriptorTable *gdt)
+InterruptManager::InterruptManager(uint16_t hardwareInterruptOffset, GlobalDescriptorTable *gdt, TaskManager *taskManager)
 : picMasterCommand(0x20),
   picMasterData(0x21),
   picSlaveCommand(0xa0),
   picSlaveData(0xa1)
 {
+	this->taskManager = taskManager;
+	this->hardwareInterruptOffset = hardwareInterruptOffset;
 	uint16_t CodeSegment = gdt->CodeSegmentSelector();
-	const uint8_t IDT_INTERRUPT_GATE = 0xe;
 
+	const uint8_t IDT_INTERRUPT_GATE = 0xe;
 	for (uint16_t i = 0; i < 256; i++)
 	{
 		handlers[i] = 0;
@@ -117,23 +120,29 @@ uint32_t InterruptManager::handleInterrupt(uint8_t interruptNumber, uint32_t esp
 	return esp;
 }
 
-uint32_t InterruptManager::DoHandleInterrupt(uint8_t interruptNumber, uint32_t esp)
+uint32_t InterruptManager::DoHandleInterrupt(uint8_t interrupt, uint32_t esp)
 {
-	if (handlers[interruptNumber] != 0)
+	if (handlers[interrupt] != 0)
 	{
-		esp = handlers[interruptNumber]->HandleInterrupt(esp);
+		esp = handlers[interrupt]->HandleInterrupt(esp);
 	}
-	else if(interruptNumber != 0x20)
+	else if(interrupt != hardwareInterruptOffset)
 	{
 		printf("UNHANDLED INTERRUPT 0x");
-		printfHex(interruptNumber);
+		printfHex(interrupt);
 		printf(" ");
 	}
 
-	if (0x20 <= interruptNumber && interruptNumber < 0x30)
+	if (interrupt == hardwareInterruptOffset)
+	{
+		esp = (uint32_t)taskManager->Schedule((CPUState*)esp);
+	}
+
+	// hardware interrupts must be acknowledged
+	if (hardwareInterruptOffset <= interrupt && interrupt < hardwareInterruptOffset+16)
 	{
 		picMasterCommand.Write(0x20);
-		if (0x28 <= interruptNumber )
+		if (hardwareInterruptOffset+8 <= interrupt )
 			picSlaveCommand.Write(0x20);
 	}
 

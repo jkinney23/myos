@@ -18,10 +18,12 @@ namespace myos
         common::uint32_t edi;   // data index
         common::uint32_t ebp;   // stack base pointer
 
+        /*
         common::uint32_t gs;   // ? segment
         common::uint32_t fs;   // ? segment
         common::uint32_t es;   // ? segment
         common::uint32_t ds;   // data segment
+        */
 
         common::uint32_t error; // error code
 
@@ -36,7 +38,7 @@ namespace myos
 
     class Task
     {
-    friend class Taskmanager;
+    friend class TaskManager;
     private:
         common::uint8_t stack[4096]; // 4 KiB
         CPUState *cpustate;
